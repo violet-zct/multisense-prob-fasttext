@@ -92,13 +92,34 @@ real Model::negativeSampling(int32_t target, real lr) {
   int32_t negTarget = getNegative(target);
 
   // We're not using the method ELK
+  //std::cout << "Not using ELK" << std::endl;
 
+  // NOW: -alpha/2*||mu-v||^2
   hidden_.addRow(*wo_, target, -1.); // mu - v_out
   sim1 = - (1./args_->var_scale)*(hidden_.normsq());
   hidden_.addRow(*wo_, target, 1.); // mu
   hidden_.addRow(*wo_, negTarget, -1.); // mu - v_out_neg
   sim2 = - (1./args_->var_scale)*(hidden_.normsq());
   hidden_.addRow(*wo_, negTarget, 1.); // mu
+
+  /*
+  // WANT: -1/2*log(det(var_f+var_g) - D/2*(2pi)
+  // -1/2(mu_f-mu_g)T(var_f+var_g)^-1(mu_f-mu_g)
+  hidden_.addRow(*wo_, target, -1.);   // mu - v_out
+  int64_t n = invar.n_;
+  assert(n == outvar.n_);
+  int det = 0;
+  Vector temp(n);
+  for (int i = 0; i < n; ++i) {
+    temp[i] = invar_->at(target, i) + outvar_->at(negTarget, i);
+    det += temp[i];
+  }
+
+  hidden_.addRow(*wo_, target, 1.);    // mu
+  hidden_.addRow(*wo_, negTarget, -1.) // mu - v_out_neg
+
+  hidden_.addRow(wo*, negTarget, 1.);  // mu
+  */
 
   real loss = args_->margin - sim1 + sim2;
   if (loss > 0.0){
@@ -117,8 +138,14 @@ real Model::negativeSampling(int32_t target, real lr) {
   return std::max((real) 0.0, loss);
 }
 
+real Model::negativeSamplingSingleVar(int32_t, fasttext::real) {
+    real loss;
+    return std::max((real) 0.0, loss);
+}
+
 real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
   // loss is the negative of similarity here
+  std::cout << "Expdot" << std::endl;
   grad_.zero();
   real sim1 = 0.0;
   real sim2 = 0.0;
@@ -171,6 +198,7 @@ std::vector<float> Model::energy(int32_t target){
     }
   }
 
+  // Partial EnergieS
   std::vector<float> pes;
   pes.push_back(sim00);
   pes.push_back(sim01);
@@ -1117,6 +1145,7 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
     } else {
       if (args_->var) {
         // not using this version
+        //TODO
       } else {
       if (args_->expdot) {
         loss_ += negativeSamplingSingleExpdot(target, lr);

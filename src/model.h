@@ -133,6 +133,7 @@ class Model {
     real groupSparsityRegularization(double, int32_t);
 
     real elk(int32_t, bool, real);
+    real negativeSamplingSingleVar(int32_t, real);
     real negativeSamplingMulti(int32_t, real);
     real negativeSamplingMultiVec2(int32_t, real);
     real negativeSamplingMultiVecExpdot(int32_t, real);
