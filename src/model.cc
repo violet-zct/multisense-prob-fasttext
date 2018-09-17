@@ -138,9 +138,99 @@ real Model::negativeSampling(int32_t target, real lr) {
   return std::max((real) 0.0, loss);
 }
 
-real Model::negativeSamplingSingleVar(int32_t, fasttext::real) {
-    real loss;
-    return std::max((real) 0.0, loss);
+real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) {
+  grad_.zero();
+  gradvar_.zero();
+  // 1. we compute sim1 and see if we need to update
+  real eplus_result = energy_singleVecvar(wordidx, target);
+  int32_t negTarget = getNegative(target);
+  real eminus_result = energy_singleVecvar(wordidx, negTarget);
+  real loss = args_->margin - eplus_result + eminus_result;
+  if (loss > 0.0){
+    // 2. The goal is to update grad_
+    // with gradients, update gradvar_
+    if (args_->var){
+      // updating gradvar_
+      // update for context j+
+      // for j=0
+      temp_.zero();
+      // invsumd = (Sigma_i + Sigma_j)^-1
+      // -invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.) = Delta_ij^2 - (Sigma_i + Sigma_j)^-1
+
+      for (int64_t ii = 0; ii < temp_.m_; ii++) {
+        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        // eplus_results simplified so only lr left
+        temp_.data_[ii] += 0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.));
+      }
+
+      // update for context j-
+      // for j=0
+      for (int64_t ii = 0; ii < temp_.m_; ii++) {
+        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        temp_.data_[ii] += -0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(negTarget, ii), 2.));
+      }
+
+      // in the end, multiple with d_i to do derivative against the log instead
+      for (int64_t ii = 0; ii < temp_.m_; ii++) {
+        gradvar_.data_[ii] = exp(invar_->at(wordidx, ii))*temp_.data_[ii];
+      }
+
+      // update outvar_[target]
+      temp_.zero();
+      // from i=0
+      for (int64_t ii = 0; ii < temp_.m_; ii++) {
+        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        temp_.data_[ii] += -0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.));
+      }
+      temp_.mulExpRow(*outvar_, target); // make it a derivative against log
+      outvar_->addRow(temp_, target, 1.);
+
+      // update outvar_[negTarget]
+      // the loss has different sign (compared to target)
+      temp_.zero();
+      // from i=0
+      for (int64_t ii = 0; ii < temp_.m_; ii++) {
+        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        temp_.data_[ii] += 0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(negTarget, ii), 2.));
+      }
+      temp_.mulExpRow(*outvar_, negTarget);
+      outvar_->addRow(temp_, negTarget, 1.);
+    }
+
+    // (1) Update grad_
+    // Do it for context j+
+    // j=0
+    // -invsumd*(hidden_.data_[ii] - wo_->at(target, ii)) = -Delta_ij
+    for (int64_t ii = 0; ii < grad_.m_; ii++) {
+      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      grad_.data_[ii] += lr*(-invsumd*(hidden_.data_[ii] - wo_->at(target, ii)));
+    }
+    // Do it for context j-
+    for (int64_t ii = 0; ii < grad_.m_; ii++) {
+      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      grad_.data_[ii] += -lr*(-invsumd*(hidden_.data_[ii] - wo_->at(negTarget, ii)));
+    }
+
+    ///////////////////////////////
+    // (3) Update wo_[target]     --- this involves eplus
+    temp_.zero();
+    // from i=0
+    for (int64_t ii = 0; ii < temp_.m_; ii++) {
+      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
+    }
+    wo_->addRow(temp_, target, lr*(1./eplus_result));
+
+    // (5) Update wo_[negTarget]  --- this involves eminus
+    temp_.zero();
+    // from i=0
+    for (int64_t ii = 0; ii < temp_.m_; ii++) {
+      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
+    }
+    wo_->addRow(temp_, negTarget, -lr*(1./eminus_result));
+  }
+  return std::max((real) 0.0, loss);
 }
 
 real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
@@ -279,7 +369,7 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
   for (int64_t j = 0; j < varin->n_; j++){
     temp_.data_[j] += exp(varin->at(wordidx, j)) + exp(varout->at(target, j));
   }
-  hidden_.addRow(*wo, target, -1.);
+  hidden_.addRow(*wo, target, -1.); // mu - vec
   real sim = 0.0;
   for (int64_t i = 0; i < temp_.m_; i++) {
     sim += pow(hidden_.data_[i], 2.0)/(1e-8 + temp_.data_[i]);
@@ -335,7 +425,10 @@ std::vector<float> Model::energy_vecvar(int32_t wordidx, int32_t target){
   return result;
 }
 
-
+// energy_vecvar but for single case
+real Model::energy_singleVecvar(int32_t wordidx, int32_t target) {
+  return partial_energy_vecvar(hidden_, grad_, wo_, wordidx, target, invar_, outvar_);
+}
 
 real Model::negativeSamplingMulti(int32_t target, real lr){
   grad_.zero();
@@ -954,13 +1047,10 @@ real Model::softmax(int32_t target, real lr) {
   return -log(output_[target]);
 }
 
-
 void Model::computeHidden(const std::vector<int32_t>& input, Vector& hidden) const {
   // by default, no dropout
   computeHidden(input, hidden, false, false);
 }
-
-
 
 void Model::computeHidden(const std::vector<int32_t>& input, Vector& hidden, bool dropout_dict, bool dropout_sub) const {
   assert(hidden.size() == hsz_);
@@ -1146,6 +1236,7 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
       if (args_->var) {
         // not using this version
         //TODO
+        loss_ += negativeSamplingSingleVar(wordidx, target, lr);
       } else {
       if (args_->expdot) {
         loss_ += negativeSamplingSingleExpdot(target, lr);
@@ -1180,7 +1271,9 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
   // update var
   if (args_->var){
     invar_->addRow(gradvar_, wordidx, 1.0);
-    invar2_->addRow(gradvar2_, wordidx, 1.0);
+    if (args_->multi) {
+      invar2_->addRow(gradvar2_, wordidx, 1.0);
+    }
   }
 }
 
