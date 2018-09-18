@@ -134,6 +134,7 @@ class Model {
 
     real elk(int32_t, bool, real);
     real negativeSamplingSingleVar(int32_t, int32_t, real);
+    real negativeSamplingSingleKL(int32_t, int32_t, real);
     real negativeSamplingMulti(int32_t, real);
     real negativeSamplingMultiVec2(int32_t, real);
     real negativeSamplingMultiVecExpdot(int32_t, real);
@@ -144,6 +145,7 @@ class Model {
 
     real negativeSamplingMultiVecVar(int32_t, int32_t, real);
     real partial_energy_vecvar(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>);
+    real partial_energy_KL(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>);
     std::vector<float> energy_vecvar(int32_t, int32_t);
     real energy_singleVecvar(int32_t, int32_t);
 };
