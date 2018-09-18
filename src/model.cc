@@ -215,7 +215,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     // from i=0
     for (int64_t ii = 0; ii < temp_.m_; ii++) {
       real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
-      temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
+      //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
+        temp_[ii] += eplus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
     wo_->addRow(temp_, target, lr*(1./eplus_result));
 
@@ -224,7 +225,9 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     // from i=0
     for (int64_t ii = 0; ii < temp_.m_; ii++) {
       real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
-      temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
+      //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
+        temp_[ii] += eminus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
+
     }
     wo_->addRow(temp_, negTarget, -lr*(1./eminus_result));
   }
@@ -324,7 +327,6 @@ real Model::negativeSamplingSingleKL(int32_t wordidx, int32_t target, real lr) {
   }
   return std::max((real) 0.0, loss);
 }
-
 
 real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
   // loss is the negative of similarity here

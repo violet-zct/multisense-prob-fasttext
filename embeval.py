@@ -357,11 +357,12 @@ def get_list_basenames(pattern, add_dot=False):
     return ll
 
 # Get the fts objects by a list of specified basenames or a matching pattern (glob pattern)
-def get_fts(list_basenames_or_pattern, verbose=0, multi=False, ft=True):
+def get_fts(list_basenames_or_pattern, verbose=1, multi=False, ft=True):
   if type(list_basenames_or_pattern) is str:
     list_basenames = get_list_basenames(list_basenames_or_pattern)
   else:
     list_basenames = list_basenames_or_pattern
+  print 'list_basenames =', list_basenames
   fts = []
   for l in list_basenames:
     # set maxn=0 if the we do not use the ft structure (ft=0)
