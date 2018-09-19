@@ -20,10 +20,10 @@ def show_nn(modelname, multi):
   ft = embeval.get_fts([modelname], multi)[0]
   for word in ['rock', 'star', 'cell', 'left']:
     print "Nearest Neighbors for {}, cluster 0".format(word)
-    print ft.show_nearest_neighbors_single(word, cl=0)
+    ft.show_nearest_neighbors_single(word, cl=0)
     if multi:
       print "Nearest Neighbors for {}, cluster 1".format(word)
-      print ft.show_nearest_neighbors(word, cl=1)
+      ft.show_nearest_neighbors(word, cl=1)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='')

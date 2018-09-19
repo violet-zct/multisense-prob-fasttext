@@ -541,7 +541,7 @@ class MultiFastText:
     words = self.idxs2words_single(highsim_idxs)
     print 'Top highest similarity of {} cl {}'.format(self.id2word[idx], cl)
     print words[:num_nns]
-    if verbose: print dist_val[:num_nns]
+    if verbose: dist_val[:num_nns]
 ###################################################################
 
 # read a file and put all the words in a list

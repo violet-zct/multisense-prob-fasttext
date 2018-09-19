@@ -28,6 +28,9 @@ FastText::FastText() : quant_(false) {}
 
 void FastText::getVector(Vector& vec, const std::string& word) {  
   const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
+  for (int i = 0; i < ngrams.size(); ++i) {
+      std::cout << ngrams[i] << " ";
+  }
   vec.zero();
   for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
     vec.addRow(*input_, *it);
@@ -84,6 +87,33 @@ void FastText::saveVectors() {
     std::string word = dict_->getWord(i);
     getVector(vec, word);
     ofs << word << " " << vec << std::endl;
+  }
+  ofs.close();
+}
+
+void FastText::getVariance(Vector& var, const std::string& word) {
+    const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
+    var.zero();
+    for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
+        var.addRow(*inputvar_, *it);
+    }
+    if (ngrams.size() > 0) {
+        var.mul(1.0 / ngrams.size());
+    }
+}
+
+void FastText::saveVariancesAvg() {
+  std::ofstream ofs(args_->output + ".varavg");
+  if (!ofs.is_open()) {
+    std::cerr << "Error opening file for saving variances." << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  ofs << dict_->nwords() << " " << args_->dim << std::endl;
+  Vector var(args_->dim);
+  for (int32_t i = 0; i < dict_->nwords(); i++) {
+    std::string word = dict_->getWord(i);
+    getVariance(var, word);
+    ofs << word << " " << var << std::endl;
   }
   ofs.close();
 }
@@ -812,6 +842,9 @@ void FastText::train(std::shared_ptr<Args> args) {
   saveModel();
   if (args_->model != model_name::sup) {
     saveVectors();
+    if (args->var) {
+      saveVariancesAvg();
+    }
     if (args_->saveOutput > 0) {
       saveOutput();
     }

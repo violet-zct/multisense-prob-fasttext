@@ -69,8 +69,10 @@ class FastText {
     FastText();
 
     void getVector(Vector&, const std::string&);
+    void getVariance(Vector&, const std::string&);
     void getVector(Vector&, const std::string&, int, float);
     void saveVectors();
+    void saveVariancesAvg();
     void saveOutput();
     void saveModel();
     void loadModel(std::istream&);
