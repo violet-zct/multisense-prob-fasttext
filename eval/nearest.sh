@@ -1,0 +1,3 @@
+python eval/eval_text9_model_nn.py --modelname modelfiles/singl_text8_e10_d300_vs2e-4_lr1e-5_margin1 --multi 0 | tee log/eval_nn_singl_text8.txt
+#python eval/eval_text9_model_nn.py --modelname modelfiles/singl_var_text8_e10_d300_vs2e-4_lr1e-5_margin1 --multi 0 | tee log/eval_nn_singl_var_text8.txt
+#python eval/eval_text9_model_nn.py --modelname modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1 --multi 0 | tee log/eval_nn_singl_var2_text8.txt

@@ -1,0 +1,21 @@
+Basename to evaluate = modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1
+list_basenames = ['modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1']
+Constructing MultiFt Object: Basename = modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1
+Loading Words from Dictionary
+Loading Emb Out
+Loading Emb In
+Cache subword
+wordrep = ['sub']
+Result DataFrame
+   Dataset  modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1-sub
+0       SL                                          25.307848             
+1       WS                                          55.847565             
+2     WS-S                                          58.132602             
+3     WS-R                                          55.130265             
+4      MEN                                          55.434681             
+5       MC                                          48.931910             
+6       RG                                          47.067566             
+7       YP                                          20.505454             
+8   MT-287                                          58.076635             
+9   MT-771                                          48.184723             
+10      RW                                          36.759416             

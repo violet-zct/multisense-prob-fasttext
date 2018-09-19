@@ -498,6 +498,11 @@ class MultiFastText:
     words = ["{}:{}".format(self.id2word[idx/self.num_mixtures], idx%self.num_mixtures) for idx in idxs]
     return words
 
+  def idxs2words_single(self, idxs):
+    # convert a list of strings to a list of words
+    words = ["{}".format(self.id2word[idx]) for idx in idxs]
+    return words
+
   def show_nearest_neighbors(self, idx_or_word, emb_multi=None, cl=0, num_nns=100, plot=False, verbose=False):
     if emb_multi is None:
       emb_multi = self.subword_emb_multi
@@ -525,15 +530,15 @@ class MultiFastText:
     idx = idx_or_word
     if idx_or_word in self.word2id:
         idx = self.word2id[idx_or_word]
-    emb = self.subword_emb
+        emb = self.subword_emb
     dist = np.dot(emb, emb[idx])/(np.linalg.norm(emb, axis=1)*np.linalg.norm(emb[idx]))
     highsim_idxs = dist.argsort()[::-1]
     # select top num_nns (linear) indices with the highest cosine similarity
     highsim_idxs = highsim_idxs[:num_nns]
     dist_val = dist[highsim_idxs]
-    print highsim_idxs
-    words = ["{}".format(self.id2word[idx]) for idx in highsim_idxs]
-    
+    #print highsim_idxs
+    #words = ["{}".format(self.id2word[idx]) for idx in highsim_idxs]
+    words = self.idxs2words_single(highsim_idxs)
     print 'Top highest similarity of {} cl {}'.format(self.id2word[idx], cl)
     print words[:num_nns]
     if verbose: print dist_val[:num_nns]

@@ -1,0 +1,4 @@
+Basename =  modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1
+list_basenames = ['modelfiles/singl_var2_text8_e10_d300_vs2e-4_lr1e-5_margin1']
+Cache subword
+Nearest Neighbors for rock, cluster 0
