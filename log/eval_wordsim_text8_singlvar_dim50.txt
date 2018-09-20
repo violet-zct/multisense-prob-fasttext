@@ -1,0 +1,21 @@
+Basename to evaluate = modelfiles/text8_singlvar_dim50
+list_basenames = ['modelfiles/text8_singlvar_dim50']
+Constructing MultiFt Object: Basename = modelfiles/text8_singlvar_dim50
+Loading Words from Dictionary
+Loading Emb Out
+Loading Emb In
+Cache subword
+wordrep = ['sub']
+Result DataFrame
+   Dataset  modelfiles/text8_singlvar_dim50-sub
+0       SL                            22.885930
+1       WS                            52.746656
+2     WS-S                            55.880842
+3     WS-R                            51.387628
+4      MEN                            55.036900
+5       MC                            47.218515
+6       RG                            47.635804
+7       YP                            21.029320
+8   MT-287                            59.522647
+9   MT-771                            48.199173
+10      RW                            33.991837

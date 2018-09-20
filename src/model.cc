@@ -139,7 +139,7 @@ real Model::negativeSampling(int32_t target, real lr) {
 real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) {
   grad_.zero();
   gradvar_.zero();
-  // 1. we compute sim1 and see if we need to update
+  // 1. we compute sim and see if we need to update
   real eplus_result = energy_singleVecvar(wordidx, target);
   int32_t negTarget = getNegative(target);
   real eminus_result = energy_singleVecvar(wordidx, negTarget);
@@ -156,7 +156,12 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       // -invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.) = Delta_ij^2 - (Sigma_i + Sigma_j)^-1
 
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
-        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        real invsumd;
+        if (args_->notlog) {
+          invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+        } else {
+          invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        }
         // eplus_results simplified so only lr left
         temp_.data_[ii] += 0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.));
       }
@@ -164,23 +169,42 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       // update for context j-
       // for j=0
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
-        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        real invsumd;
+        if (args_->notlog) {
+          invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
+        } else {
+          invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        }
         temp_.data_[ii] += -0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(negTarget, ii), 2.));
       }
 
       // in the end, multiple with d_i to do derivative against the log instead
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
-        gradvar_.data_[ii] = exp(invar_->at(wordidx, ii))*temp_.data_[ii];
+        if (args_->notlog) {
+          // TODO SHOULD WE MULTIPLY BY INVAR?
+          gradvar_.data_[ii] = invar_->at(wordidx, ii) * temp_.data_[ii];
+        } else {
+          gradvar_.data_[ii] = exp(invar_->at(wordidx, ii)) * temp_.data_[ii];
+        }
       }
 
       // update outvar_[target]
       temp_.zero();
       // from i=0
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
-        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        real invsumd;
+        if (args_->notlog) {
+          invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+        } else {
+          invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+        }
         temp_.data_[ii] += -0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.));
       }
-      temp_.mulExpRow(*outvar_, target); // make it a derivative against log
+      if (args_->notlog) {
+        temp_.mulRow(*outvar_, target);
+      } else {
+        temp_.mulExpRow(*outvar_, target); // make it a derivative against log
+      }
       outvar_->addRow(temp_, target, 1.);
 
       // update outvar_[negTarget]
@@ -188,10 +212,19 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       temp_.zero();
       // from i=0
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
-        real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        real invsumd;
+        if (args_->notlog) {
+          invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
+        } else {
+          invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        }
         temp_.data_[ii] += 0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(negTarget, ii), 2.));
       }
-      temp_.mulExpRow(*outvar_, negTarget);
+      if (args_->notlog) {
+        temp_.mulRow(*outvar_, negTarget);
+      } else {
+        temp_.mulExpRow(*outvar_, negTarget);
+      }
       outvar_->addRow(temp_, negTarget, 1.);
     }
 
@@ -200,12 +233,22 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     // j=0
     // -invsumd*(hidden_.data_[ii] - wo_->at(target, ii)) = -Delta_ij
     for (int64_t ii = 0; ii < grad_.m_; ii++) {
-      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      real invsumd;
+      if (args_->notlog) {
+        invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+      } else {
+        invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      }
       grad_.data_[ii] += lr*(-invsumd*(hidden_.data_[ii] - wo_->at(target, ii)));
     }
     // Do it for context j-
     for (int64_t ii = 0; ii < grad_.m_; ii++) {
-      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      real invsumd;
+      if (args_->notlog) {
+        invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
+      } else {
+        invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      }
       grad_.data_[ii] += -lr*(-invsumd*(hidden_.data_[ii] - wo_->at(negTarget, ii)));
     }
 
@@ -214,7 +257,12 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     temp_.zero();
     // from i=0
     for (int64_t ii = 0; ii < temp_.m_; ii++) {
-      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      real invsumd;
+      if (args_->notlog) {
+        invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+      } else {
+        invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
+      }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
         temp_[ii] += eplus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
@@ -224,7 +272,12 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     temp_.zero();
     // from i=0
     for (int64_t ii = 0; ii < temp_.m_; ii++) {
-      real invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      real invsumd;
+      if (args_->notlog) {
+        invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
+      } else {
+        invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+      }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
         temp_[ii] += eminus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
 
@@ -460,13 +513,18 @@ std::vector<float> Model::energy_expdot(int32_t target){
 real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Matrix> varin, std::shared_ptr<Matrix> varout){
   temp_.zero();
   for (int64_t j = 0; j < varin->n_; j++){
-    temp_.data_[j] += exp(varin->at(wordidx, j)) + exp(varout->at(target, j));
+    if (args_->notlog) {
+      temp_.data_[j] += varin->at(wordidx, j) + varout->at(target, j);
+    } else {
+      temp_.data_[j] += exp(varin->at(wordidx, j)) + exp(varout->at(target, j));
+    }
   }
   hidden_.addRow(*wo, target, -1.); // mu - vec
   real sim = 0.0;
   for (int64_t i = 0; i < temp_.m_; i++) {
     sim += pow(hidden_.data_[i], 2.0)/(1e-8 + temp_.data_[i]);
     sim += log(temp_.data_[i]); // This is the log det part
+    // sim += args->dim*log(2) // TODO This should be part of the formula
   }
   sim *= -0.5;
   hidden.addRow(*wo, target, 1.); // mu

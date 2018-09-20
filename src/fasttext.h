@@ -69,7 +69,7 @@ class FastText {
     FastText();
 
     void getVector(Vector&, const std::string&);
-    void getVariance(Vector&, Vector&, const std::string&);
+    void getVariance(Vector&, const std::string&, bool);
     void getVector(Vector&, const std::string&, int, float);
     void saveVectors();
     void saveVariances();

@@ -74,6 +74,7 @@ class Args {
     bool multi;
     bool expdot;
     bool var;
+    bool notlog;
 };
 
 }

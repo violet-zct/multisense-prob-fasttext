@@ -61,6 +61,7 @@ Args::Args() {
   multi = false;
   expdot = false;
   var = false;
+  notlog = false;
 }
 
 void Args::parseArgs(int argc, char** argv) {
@@ -189,6 +190,9 @@ void Args::parseArgs(int argc, char** argv) {
     } else if (strcmp(argv[ai], "-var") == 0) {
       var = atoi(argv[ai + 1]); // 0 for false and else for true
       std::cerr << "var" << var << std::endl;
+    } else if (strcmp(argv[ai], "-notlog") == 0) {
+      notlog = atoi(argv[ai + 1]); // 0 for false and else for true
+      std::cerr << "notlog" << notlog << std::endl;
     } else {
       std::cerr << "Unknown argument: " << argv[ai] << std::endl;
       printHelp();

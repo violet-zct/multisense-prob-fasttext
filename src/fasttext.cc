@@ -88,32 +88,45 @@ void FastText::saveVectors() {
   ofs.close();
 }
 
-void FastText::getVariance(Vector& vari, Vector& varo, const std::string& word) {
-    vari.zero();
-    varo.zero();
+void FastText::getVariance(Vector& var, const std::string& word, bool first = true) {
+    var.zero();
     int32_t id = dict_->getId(word);
-    vari.addRow(*inputvar_, id);
-    varo.addRow(*outputvar_, id);
+    if (first) {
+      var.addRow(*inputvar_, id);
+    } else {
+      var.addRow(*input2var_, id);
+    }
 }
 
 void FastText::saveVariances() {
-  std::ofstream ofsi(args_->output + ".varin");
-  std::ofstream ofso(args_->output + ".varout");
-  if (!ofsi.is_open() || !ofso.is_open()) {
+  std::ofstream ofs(args_->output + ".var");
+  if (!ofs.is_open()) {
     std::cerr << "Error opening file for saving variances." << std::endl;
     exit(EXIT_FAILURE);
   }
-  ofsi << dict_->nwords() << " " << args_->dim << std::endl;
-  ofso << dict_->nwords() << " " << args_->dim << std::endl;
-  Vector vari(args_->dim), varo(args_->dim);
+  ofs << dict_->nwords() << " " << args_->dim << std::endl;
+  Vector var(args_->dim);
   for (int32_t i = 0; i < dict_->nwords(); i++) {
     std::string word = dict_->getWord(i);
-    getVariance(vari, varo, word);
-    ofsi << word << " " << vari << std::endl;
-    ofso << word << " " << varo << std::endl;
+    getVariance(var, word);
+    ofs << word << " " << var << std::endl;
   }
-  ofsi.close();
-  ofso.close();
+  ofs.close();
+  if (args_->multi) {
+    std::ofstream ofs(args_->output + ".var2");
+    if (!ofs.is_open()) {
+      std::cerr << "Error opening file for saving variances." << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    ofs << dict_->nwords() << " " << args_->dim << std::endl;
+    Vector var(args_->dim);
+    for (int32_t i = 0; i < dict_->nwords(); i++) {
+      std::string word = dict_->getWord(i);
+      getVariance(var, word, false);
+      ofs << word << " " << var << std::endl;
+    }
+    ofs.close();
+  }
 }
 
 void FastText::saveOutput() {
@@ -785,7 +798,11 @@ void FastText::train(std::shared_ptr<Args> args) {
     input_->uniform(1.0 / args_->dim);
     if (args_->var){
       inputvar_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-      inputvar_->init(logvar);
+      if (args_->notlog) {
+        inputvar_->init(args->var_scale);
+      } else {
+        inputvar_->init(logvar);
+      }
     }
   }
 
@@ -796,7 +813,11 @@ void FastText::train(std::shared_ptr<Args> args) {
     // Feb6
     if (args_->var){
       outputvar_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-      outputvar_->init(logvar);
+      if (args_->notlog) {
+        outputvar_->init(args_->var_scale);
+      } else {
+        outputvar_->init(logvar);
+      }
     }
   }
   output_->zero();
@@ -837,7 +858,9 @@ void FastText::train(std::shared_ptr<Args> args) {
   if (args_->model != model_name::sup) {
     saveVectors();
     if (args->var) {
-      model_->expVar();
+      if (!args_->notlog) {
+        model_->expVar();
+      }
       saveVariances();
     }
     if (args_->saveOutput > 0) {

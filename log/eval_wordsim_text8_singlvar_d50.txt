@@ -1,0 +1,4 @@
+Basename to evaluate = modelfiles/text8_singlvar_d50
+list_basenames = ['modelfiles/text8_singlvar_d50']
+Constructing MultiFt Object: Basename = modelfiles/text8_singlvar_d50
+Loading Words from Dictionary
