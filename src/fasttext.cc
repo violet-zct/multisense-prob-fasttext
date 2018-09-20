@@ -28,9 +28,6 @@ FastText::FastText() : quant_(false) {}
 
 void FastText::getVector(Vector& vec, const std::string& word) {  
   const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
-  for (int i = 0; i < ngrams.size(); ++i) {
-      std::cout << ngrams[i] << " ";
-  }
   vec.zero();
   for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
     vec.addRow(*input_, *it);
@@ -92,18 +89,13 @@ void FastText::saveVectors() {
 }
 
 void FastText::getVariance(Vector& var, const std::string& word) {
-    const std::vector<int32_t>& ngrams = dict_->getNgrams(word);
     var.zero();
-    for (auto it = ngrams.begin(); it != ngrams.end(); ++it) {
-        var.addRow(*inputvar_, *it);
-    }
-    if (ngrams.size() > 0) {
-        var.mul(1.0 / ngrams.size());
-    }
+    int32_t id = dict_->getId(word);
+    var.addRow(*input_, id);
 }
 
-void FastText::saveVariancesAvg() {
-  std::ofstream ofs(args_->output + ".varavg");
+void FastText::saveVariances() {
+  std::ofstream ofs(args_->output + ".var");
   if (!ofs.is_open()) {
     std::cerr << "Error opening file for saving variances." << std::endl;
     exit(EXIT_FAILURE);
@@ -188,7 +180,6 @@ void FastText::saveModel() {
 
   ofs.close();
 }
-
 
 void FastText::saveNgramVectors(std::string prefix) {
   std::string fndict(prefix + ".words");
@@ -279,9 +270,6 @@ void FastText::saveNgramVectors(std::string prefix) {
     ofs_vec.close();
   }
 }
-
-
-
 
 void FastText::loadModel(const std::string& filename) {
   std::ifstream ifs(filename, std::ifstream::binary);
@@ -843,7 +831,7 @@ void FastText::train(std::shared_ptr<Args> args) {
   if (args_->model != model_name::sup) {
     saveVectors();
     if (args->var) {
-      saveVariancesAvg();
+      saveVariances();
     }
     if (args_->saveOutput > 0) {
       saveOutput();
