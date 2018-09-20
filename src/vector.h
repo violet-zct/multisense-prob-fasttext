@@ -41,7 +41,6 @@ class Vector {
     void addVector(const Vector& source);
     void addVector(const Vector&, real);
     void addRow(const Matrix&, int64_t);
-    void addRow(const Matrix&, int64_t, bool verbose);
     void addRow(const QMatrix&, int64_t);
     void addRow(const Matrix&, int64_t, real);
     void mul(const QMatrix&, const Vector&);

@@ -87,16 +87,6 @@ void Vector::addRow(const Matrix& A, int64_t i) {
   }
 }
 
-void Vector::addRow(const Matrix& A, int64_t i, bool verbose) {
-  assert(i >= 0);
-  if (verbose) std::cout << "i: " << i << "\nA.m_" << A.m_ << std::endl;
-  assert(i < A.m_);
-  assert(m_ == A.n_);
-  for (int64_t j = 0; j < A.n_; j++){
-    data_[j] += A.at(i, j);
-  }
-}
-
 void Vector::mulRow(const Matrix& A, int64_t i) {
   assert(i >= 0);
   assert(i < A.m_);

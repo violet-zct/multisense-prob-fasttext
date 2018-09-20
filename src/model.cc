@@ -1535,4 +1535,17 @@ real Model::sigmoid(real x) const {
   }
 }
 
+void Model::expVar() {
+  int64_t m = invar_->m_;
+  int64_t n = invar_->n_;
+  assert(m == outvar_->m_);
+  assert(n == outvar_->n_);
+  for (int32_t i = 0; i < m; ++i) {
+    for (int32_t j = 0; j < n; ++j) {
+      invar_->data_[i*n+j] = exp(invar_->at(i,j));
+      outvar_->data_[i*n+j] = exp(outvar_->at(i,j));
+    }
+  }
+}
+
 }

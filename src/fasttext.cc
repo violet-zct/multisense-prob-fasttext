@@ -88,26 +88,32 @@ void FastText::saveVectors() {
   ofs.close();
 }
 
-void FastText::getVariance(Vector& var, const std::string& word) {
-    var.zero();
+void FastText::getVariance(Vector& vari, Vector& varo, const std::string& word) {
+    vari.zero();
+    varo.zero();
     int32_t id = dict_->getId(word);
-    var.addRow(*input_, id);
+    vari.addRow(*inputvar_, id);
+    varo.addRow(*outputvar_, id);
 }
 
 void FastText::saveVariances() {
-  std::ofstream ofs(args_->output + ".var");
-  if (!ofs.is_open()) {
+  std::ofstream ofsi(args_->output + ".varin");
+  std::ofstream ofso(args_->output + ".varout");
+  if (!ofsi.is_open() || !ofso.is_open()) {
     std::cerr << "Error opening file for saving variances." << std::endl;
     exit(EXIT_FAILURE);
   }
-  ofs << dict_->nwords() << " " << args_->dim << std::endl;
-  Vector var(args_->dim);
+  ofsi << dict_->nwords() << " " << args_->dim << std::endl;
+  ofso << dict_->nwords() << " " << args_->dim << std::endl;
+  Vector vari(args_->dim), varo(args_->dim);
   for (int32_t i = 0; i < dict_->nwords(); i++) {
     std::string word = dict_->getWord(i);
-    getVariance(var, word);
-    ofs << word << " " << var << std::endl;
+    getVariance(vari, varo, word);
+    ofsi << word << " " << vari << std::endl;
+    ofso << word << " " << varo << std::endl;
   }
-  ofs.close();
+  ofsi.close();
+  ofso.close();
 }
 
 void FastText::saveOutput() {
@@ -831,6 +837,7 @@ void FastText::train(std::shared_ptr<Args> args) {
   if (args_->model != model_name::sup) {
     saveVectors();
     if (args->var) {
+      model_->expVar();
       saveVariances();
     }
     if (args_->saveOutput > 0) {

@@ -119,6 +119,8 @@ class Model {
     void computeOutputSoftmax(Vector&, Vector&) const;
     void computeOutputSoftmax();
 
+    void expVar();
+
     void setTargetCounts(const std::vector<int64_t>&);
     void initTableNegatives(const std::vector<int64_t>&);
     void buildTree(const std::vector<int64_t>&);
