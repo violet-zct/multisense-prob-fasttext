@@ -1,0 +1,21 @@
+Basename to evaluate = modelfiles/test2
+list_basenames = ['modelfiles/test2']
+Constructing MultiFt Object: Basename = modelfiles/test2
+Loading Words from Dictionary
+Loading Emb Out
+Loading Emb In
+Cache subword
+wordrep = ['sub']
+Result DataFrame
+   Dataset  modelfiles/test2-sub
+0       SL              2.039864
+1       WS             -2.367297
+2     WS-S             -7.593064
+3     WS-R             -5.077069
+4      MEN              1.773890
+5       MC             11.815755
+6       RG             15.764225
+7       YP              3.855818
+8   MT-287             -5.335887
+9   MT-771             -4.332015
+10      RW              6.199563

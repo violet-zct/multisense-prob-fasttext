@@ -158,7 +158,7 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
         real invsumd;
         if (args_->notlog) {
-          invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+          invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
         } else {
           invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
         }
@@ -181,8 +181,9 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       // in the end, multiple with d_i to do derivative against the log instead
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
         if (args_->notlog) {
-          // TODO SHOULD WE MULTIPLY BY INVAR?
-          gradvar_.data_[ii] = invar_->at(wordidx, ii) * temp_.data_[ii];
+          // TODO NO MULTIPLICATION BY INVAR (CHAIN RULE)
+          //gradvar_.data_[ii] = invar_->at(wordidx, ii) * temp_.data_[ii];
+          gradvar_.data_[ii] = temp_.data_[ii];
         } else {
           gradvar_.data_[ii] = exp(invar_->at(wordidx, ii)) * temp_.data_[ii];
         }
@@ -194,14 +195,15 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       for (int64_t ii = 0; ii < temp_.m_; ii++) {
         real invsumd;
         if (args_->notlog) {
-          invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
+          invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(target, ii));
         } else {
           invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
         }
         temp_.data_[ii] += -0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(target, ii), 2.));
       }
       if (args_->notlog) {
-        temp_.mulRow(*outvar_, target);
+        // TODO NO MULTIPLICATION BY OUTVAR
+        //temp_.mulRow(*outvar_, target);
       } else {
         temp_.mulExpRow(*outvar_, target); // make it a derivative against log
       }
@@ -221,7 +223,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
         temp_.data_[ii] += 0.5*lr*(-invsumd + pow(invsumd, 2.)*pow(hidden_.data_[ii] - wo_->at(negTarget, ii), 2.));
       }
       if (args_->notlog) {
-        temp_.mulRow(*outvar_, negTarget);
+        // TODO NO MULTIPLICATION BY OUTVAR
+        //temp_.mulRow(*outvar_, negTarget);
       } else {
         temp_.mulExpRow(*outvar_, negTarget);
       }
@@ -264,9 +267,9 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
         invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
       }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
-        temp_[ii] += eplus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
+      temp_[ii] += invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
-    wo_->addRow(temp_, target, lr*(1./eplus_result));
+    wo_->addRow(temp_, target, lr);
 
     // (5) Update wo_[negTarget]  --- this involves eminus
     temp_.zero();
@@ -279,10 +282,9 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
         invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
       }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
-        temp_[ii] += eminus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
-
+      temp_[ii] += invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
-    wo_->addRow(temp_, negTarget, -lr*(1./eminus_result));
+    wo_->addRow(temp_, negTarget, -lr);
   }
   return std::max((real) 0.0, loss);
 }
@@ -524,8 +526,8 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
   for (int64_t i = 0; i < temp_.m_; i++) {
     sim += pow(hidden_.data_[i], 2.0)/(1e-8 + temp_.data_[i]);
     sim += log(temp_.data_[i]); // This is the log det part
-    // sim += args->dim*log(2) // TODO This should be part of the formula
   }
+  sim += args_->dim*log(2*M_PI); // TODO This should be part of the formula
   sim *= -0.5;
   hidden.addRow(*wo, target, 1.); // mu
   return sim;
