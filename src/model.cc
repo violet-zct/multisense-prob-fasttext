@@ -267,9 +267,9 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
         invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(target, ii)));
       }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(target, ii));
-      temp_[ii] += invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
+      temp_[ii] += eplus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
-    wo_->addRow(temp_, target, lr);
+    wo_->addRow(temp_, target, lr*(1./eplus_result));
 
     // (5) Update wo_[negTarget]  --- this involves eminus
     temp_.zero();
@@ -277,14 +277,14 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     for (int64_t ii = 0; ii < temp_.m_; ii++) {
       real invsumd;
       if (args_->notlog) {
-        invsumd = 1./(1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
+        invsumd = 1. / (1e-8 + invar_->at(wordidx, ii) + outvar_->at(negTarget, ii));
       } else {
-        invsumd = 1./(1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
+        invsumd = 1. / (1e-8 + exp(invar_->at(wordidx, ii)) + exp(outvar_->at(negTarget, ii)));
       }
       //temp_[ii] += lr*(hidden_.data_[ii] - wo_->at(negTarget, ii));
-      temp_[ii] += invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
+      temp_[ii] += eminus_result*invsumd*(hidden_.data_[ii] - wo_->at(target, ii));
     }
-    wo_->addRow(temp_, negTarget, -lr);
+    wo_->addRow(temp_, negTarget, -lr*(1./eminus_result));
   }
   return std::max((real) 0.0, loss);
 }

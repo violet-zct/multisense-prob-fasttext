@@ -1,0 +1,8 @@
+Basename to evaluate = modelfiles/lr01novar05
+list_basenames = ['modelfiles/lr01novar05']
+Constructing MultiFt Object: Basename = modelfiles/lr01novar05
+Loading Words from Dictionary
+Loading Emb Out
+Loading Emb In
+Cache subword
+wordrep = ['sub']
