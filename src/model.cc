@@ -101,11 +101,11 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       gradvar_ += gradvar_p_ + gradvar_n_;
     }
 
-    gradvar_p_ = exp(outvar_[target]) * gradvar_p_;
-    gradvar_n_ = exp(outvar_[negTarget] * gradvar_n_);
-    gradvar_ = exp(invar_[wordidx]) * gradvar_;
-    outvar_[target] += gradvar_p_;
-    outvar_[negTarget] += gradvar_n_;
+    gradvar_p_ = exp(outvar_.data_[target]) * gradvar_p_;
+    gradvar_n_ = exp(outvar_.data_[negTarget] * gradvar_n_);
+    gradvar_ = exp(invar_.data_[wordidx]) * gradvar_;
+    outvar_.data_[target] += gradvar_p_;
+    outvar_.data_[negTarget] += gradvar_n_;
     // TODO: thresholding the variance within a range
 
     for (int64_t ii = 0; ii < grad_.m_; ii++) {
@@ -122,8 +122,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     wo_->addRow(gradmu_n_, negTarget, 1.);
 
     if (args_->min_logvar !=0 && args_->max_logvar !=0) {
-      outvar_[target] = regLogVar(outvar_[target]);
-      outvar_[negTarget] = regLogVar(outvar_[negTarget]);
+      outvar_.data_[target] = regLogVar(outvar_.data_[target]);
+      outvar_.data_[negTarget] = regLogVar(outvar_.data_[negTarget]);
     }
   }
   return std::max((real) 0.0, loss);
@@ -160,7 +160,7 @@ real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
 // partial energy expdot
 real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Vector> varin, std::shared_ptr<Vector> varout, bool true_label){
   temp_.zero();
-  real var_sum = exp(varin[wordidx]) + exp(varout[target]);
+  real var_sum = exp(varin.data_[wordidx]) + exp(varout.data_[target]);
 
   hidden_.addRow(*wo, target, -1.); // mu - vec
   if true_label == true {
@@ -248,7 +248,7 @@ real Model::softmax(int32_t target, real lr) {
     grad_.addRow(*wo_, i, alpha);
     wo_->addRow(hidden_, i, alpha);
   }
-  return -log(output_[target]);
+  return -log(output_.data_[target]);
 }
 
 void Model::computeHidden(const std::vector<int32_t>& input, Vector& hidden)
@@ -371,10 +371,10 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
     wi_->addRow(grad_, *it, 1.0);
   }
 
-  invar_[wordidx] += gradvar_;
+  invar_.data_[wordidx] += gradvar_;
 
   if (args_->min_logvar !=0 && args_->max_logvar !=0) {
-    invar_[wordidx] = regLogVar(invar_[wordidx]);
+    invar_.data_[wordidx] = regLogVar(invar_.data_[wordidx]);
   }
 }
 
