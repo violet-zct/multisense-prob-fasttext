@@ -111,11 +111,11 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     for (int64_t ii = 0; ii < grad_.m_; ii++) {
       gradmu_p_[ii] += lr * (wp_invsumd * wp_diff_[ii]);
       gradmu_n_[ii] += -lr * (wn_invsumd * wn_diff_[ii]);
-      grad_->data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
+      grad_.data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
     }
     if (args_->c != 0.0) {
-     gradmu_p_->addRow(wo_, target, -lr*args_->c*2.);
-     gradmu_n_->addRow(wo_, negTarget, -lr*args_->c*2.);
+     gradmu_p_.addRow(wo_, target, -lr*args_->c*2.);
+     gradmu_n_.addRow(wo_, negTarget, -lr*args_->c*2.);
     }
 
     wo_->addRow(gradmu_p_, target, 1.);
@@ -364,7 +364,7 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
   }
 
   if (args_->c != 0.0) {
-    grad_->addRow(wi_, wordidx, -lr*args_->c*2.);
+    grad_.addRow(wi_, wordidx, -2*lr*args_->c);
   }
 
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
