@@ -101,17 +101,17 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       gradvar_ += gradvar_p_ + gradvar_n_;
     }
 
-    gradvar_p_ = exp(outvar_.data_[target]) * gradvar_p_;
-    gradvar_n_ = exp(outvar_.data_[negTarget] * gradvar_n_);
-    gradvar_ = exp(invar_.data_[wordidx]) * gradvar_;
-    outvar_.data_[target] += gradvar_p_;
-    outvar_.data_[negTarget] += gradvar_n_;
+    gradvar_p_ = exp(outvar_->data_[target]) * gradvar_p_;
+    gradvar_n_ = exp(outvar_->data_[negTarget] * gradvar_n_);
+    gradvar_ = exp(invar_->data_[wordidx]) * gradvar_;
+    outvar_->data_[target] += gradvar_p_;
+    outvar_->data_[negTarget] += gradvar_n_;
     // TODO: thresholding the variance within a range
 
     for (int64_t ii = 0; ii < grad_.m_; ii++) {
       gradmu_p_[ii] += lr * (wp_invsumd * wp_diff_[ii]);
       gradmu_n_[ii] += -lr * (wn_invsumd * wn_diff_[ii]);
-      grad_.data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
+      grad_->data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
     }
     if (args_->c != 0.0) {
      gradmu_p_->addRow(wo_, target, -lr*args_->c*2.);
@@ -122,8 +122,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     wo_->addRow(gradmu_n_, negTarget, 1.);
 
     if (args_->min_logvar !=0 && args_->max_logvar !=0) {
-      outvar_.data_[target] = regLogVar(outvar_.data_[target]);
-      outvar_.data_[negTarget] = regLogVar(outvar_.data_[negTarget]);
+      outvar_->data_[target] = regLogVar(outvar_->data_[target]);
+      outvar_->data_[negTarget] = regLogVar(outvar_->data_[negTarget]);
     }
   }
   return std::max((real) 0.0, loss);
@@ -160,7 +160,7 @@ real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
 // partial energy expdot
 real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Vector> varin, std::shared_ptr<Vector> varout, bool true_label){
   temp_.zero();
-  real var_sum = exp(varin.data_[wordidx]) + exp(varout.data_[target]);
+  real var_sum = exp(varin->data_[wordidx]) + exp(varout->data_[target]);
 
   hidden_.addRow(*wo, target, -1.); // mu - vec
   if true_label == true {
@@ -371,10 +371,10 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
     wi_->addRow(grad_, *it, 1.0);
   }
 
-  invar_.data_[wordidx] += gradvar_;
+  invar_->data_[wordidx] += gradvar_;
 
   if (args_->min_logvar !=0 && args_->max_logvar !=0) {
-    invar_.data_[wordidx] = regLogVar(invar_.data_[wordidx]);
+    invar_->data_[wordidx] = regLogVar(invar_->data_[wordidx]);
   }
 }
 
@@ -528,8 +528,8 @@ void Model::expVar() {
   int64_t m = invar_->m_;
   assert(m == outvar_->m_);
   for (int32_t i = 0; i < m; ++i) {
-    invar_->data_[i] = exp(invar_[i]);
-    outvar_->data_[i] = exp(outvar_[i]);
+    invar_->data_[i] = exp(invar_->data_[i]);
+    outvar_->data_[i] = exp(outvar_->data_[i]);
   }
 }
 }
