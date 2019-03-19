@@ -167,7 +167,7 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
   real var_sum = exp(varin->data_[wordidx]) + exp(varout->data_[target]);
 
   hidden_.addRow(*wo, target, -1.); // mu - vec
-  if true_label == true {
+  if (true_label) {
     wp_diff_ = hidden_;
     wp_var_sum_ = var_sum;
   } else {
@@ -187,21 +187,7 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
 
 // KL Divergence
 real Model::partial_energy_KL(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Vector> varin, std::shared_ptr<Vector> varout){
-  temp_.zero();
-  for (int64_t j = 0; j < varin->n_; j++){
-    temp_.data_[j] += exp(varin->at(wordidx, j));
-  }
-  hidden_.addRow(*wo, target, -1.); // mu - vec
-  real sim = 0.0;
-  for (int64_t i = 0; i < temp_.m_; i++) {
-    // TODO
-    //sim +=
-    sim += pow(hidden_.data_[i], 2.0)/(1e-8 + temp_.data_[i]);
-    sim += log(temp_.data_[i]); // This is the log det part
-  }
-  sim *= -0.5;
-  hidden.addRow(*wo, target, 1.); // mu
-  return sim;
+    // Not implemented yet
 }
 
 // energy_vecvar but for single case
