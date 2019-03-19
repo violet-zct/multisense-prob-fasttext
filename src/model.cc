@@ -114,8 +114,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       grad_.data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
     }
     if (args_->c != 0.0) {
-     gradmu_p_.addRow(wo_, target, -lr*args_->c*2.);
-     gradmu_n_.addRow(wo_, negTarget, -lr*args_->c*2.);
+     gradmu_p_.addRow(wo_, target, -2*lr*args_->c);
+     gradmu_n_.addRow(wo_, negTarget, -2*lr*args_->c);
     }
 
     wo_->addRow(gradmu_p_, target, 1.);
