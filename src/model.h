@@ -138,8 +138,8 @@ class Model {
     real negativeSamplingSingleVar(int32_t, int32_t, real);
     real negativeSamplingSingleKL(int32_t, int32_t, real);
 
-    real partial_energy_vecvar(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>, bool);
-    real partial_energy_KL(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>);
+    real partial_energy_vecvar(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Vector>, std::shared_ptr<Vector>, bool);
+    real partial_energy_KL(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Vector>, std::shared_ptr<Vector>);
     std::vector<float> energy_vecvar(int32_t, int32_t);
     real energy_singleVecvar(int32_t, int32_t, bool);
     real regLogVar(real logvar);

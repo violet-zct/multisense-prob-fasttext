@@ -25,8 +25,8 @@ Model::Model(std::shared_ptr<Matrix> wi,
              std::shared_ptr<Vector> outvar,
              std::shared_ptr<Args> args,
              int32_t seed)
-  : hidden_(args->dim), output_(wo->m_),
-  grad_(args->dim), temp_(args->dim), rng(seed), quant_(false)
+  : hidden_(args->dim), output_(wo->m_), gradmu_p_(args_->dim), gradmu_n_(args_->dim),
+  grad_(args->dim), temp_(args->dim), rng(seed), quant_(false), wp_diff_(args_->dim), wn_diff_(args_->dim)
 {
   wi_ = wi;
   wo_ = wo;
@@ -42,6 +42,10 @@ Model::Model(std::shared_ptr<Matrix> wi,
   nexamples_ = 1;
   initSigmoid();
   initLog();
+
+  gradvar_p_ = 0.0;
+  gradvar_n_ = 0.0;
+  gradvar_ = 0.0;
 }
 
 Model::~Model() {
@@ -114,8 +118,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       grad_.data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
     }
     if (args_->c != 0.0) {
-     gradmu_p_.addRow(wo_, target, -2*lr*args_->c);
-     gradmu_n_.addRow(wo_, negTarget, -2*lr*args_->c);
+     gradmu_p_.addRow(*wo_, target, -2*lr*args_->c);
+     gradmu_n_.addRow(*wo_, negTarget, -2*lr*args_->c);
     }
 
     wo_->addRow(gradmu_p_, target, 1.);
@@ -364,7 +368,7 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
   }
 
   if (args_->c != 0.0) {
-    grad_.addRow(wi_, wordidx, -2*lr*args_->c);
+    grad_.addRow(*wi_, wordidx, -2*lr*args_->c);
   }
 
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
