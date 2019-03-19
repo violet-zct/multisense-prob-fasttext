@@ -43,15 +43,8 @@ class FastText {
     std::shared_ptr<Matrix> input_;
     std::shared_ptr<Matrix> output_;
 
-    // BenA: for multi-prototype
-    std::shared_ptr<Matrix> input2_;
-    std::shared_ptr<Matrix> output2_;
-
-    std::shared_ptr<Matrix> inputvar_;
-    std::shared_ptr<Matrix> outputvar_;
-    std::shared_ptr<Matrix> input2var_;
-    std::shared_ptr<Matrix> output2var_;
-
+    std::shared_ptr<Vector> inputvar_;
+    std::shared_ptr<Vector> outputvar_;
 
     std::shared_ptr<QMatrix> qinput_;
     std::shared_ptr<QMatrix> qoutput_;

@@ -31,6 +31,7 @@ class Vector {
     ~Vector();
 
     real& operator[](int64_t);
+    void operator=(Vector);
     const real& operator[](int64_t) const;
 
     int64_t size() const;

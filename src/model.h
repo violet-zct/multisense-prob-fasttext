@@ -40,25 +40,32 @@ class Model {
   private:
     std::shared_ptr<Matrix> wi_;
     std::shared_ptr<Matrix> wo_;
-    std::shared_ptr<Matrix> wi2_;
-    std::shared_ptr<Matrix> wo2_;
 
-    std::shared_ptr<Matrix> invar_;
-    std::shared_ptr<Matrix> outvar_;
-    std::shared_ptr<Matrix> invar2_;
-    std::shared_ptr<Matrix> outvar2_;
+    std::shared_ptr<Vector> invar_;
+    std::shared_ptr<Vector> outvar_;
 
     std::shared_ptr<QMatrix> qwi_;
     std::shared_ptr<QMatrix> qwo_;
     std::shared_ptr<Args> args_;
+    bool normalizeGradient_;
     Vector hidden_;
-    Vector hidden2_;
+
     Vector output_;
+    Vector gradmu_p_;
+    Vector gradmu_n_;
     Vector grad_;
-    Vector grad2_;
+
     Vector temp_;
-    Vector gradvar_;
-    Vector gradvar2_;
+    real gradvar_p_;
+    real gradvar_n_;
+    real gradvar_;
+
+    Vector wp_diff_;
+    Vector wn_diff_;
+
+    real wp_var_sum_;
+    real wn_var_sum_;
+
     int32_t hsz_;
     int32_t osz_;
     real loss_;
@@ -85,18 +92,13 @@ class Model {
   public:
     Model(std::shared_ptr<Matrix>,
              std::shared_ptr<Matrix>,
-             std::shared_ptr<Matrix>, 
-             std::shared_ptr<Matrix>, 
-             std::shared_ptr<Matrix>,
-             std::shared_ptr<Matrix>,
-             std::shared_ptr<Matrix>,
-             std::shared_ptr<Matrix>,
+             std::shared_ptr<Vector>,
+             std::shared_ptr<Vector>,
              std::shared_ptr<Args>,
              int32_t);
     ~Model();
 
     real binaryLogistic(int32_t, bool, real);
-    real negativeSampling(int32_t, real);
     real negativeSamplingSingleExpdot(int32_t, real);
     real hierarchicalSoftmax(int32_t, real);
     real softmax(int32_t, real);
@@ -113,9 +115,7 @@ class Model {
                    Vector&, Vector&) const;
     void update(const std::vector<int32_t>&, int32_t, real);
     void computeHidden(const std::vector<int32_t>&, Vector&) const;
-    void computeHidden(const std::vector<int32_t>&, Vector&, bool, bool) const;
-    void computeHidden2(const std::vector<int32_t>&, Vector&, bool, bool) const;
-    void computeHidden2_mv(const std::vector<int32_t>&, Vector&) const;
+
     void computeOutputSoftmax(Vector&, Vector&) const;
     void computeOutputSoftmax();
 
@@ -137,19 +137,12 @@ class Model {
     real elk(int32_t, bool, real);
     real negativeSamplingSingleVar(int32_t, int32_t, real);
     real negativeSamplingSingleKL(int32_t, int32_t, real);
-    real negativeSamplingMulti(int32_t, real);
-    real negativeSamplingMultiVec2(int32_t, real);
-    real negativeSamplingMultiVecExpdot(int32_t, real);
-    std::vector<float> energy(int32_t);
-    real partial_energy(Vector& , Vector& , std::shared_ptr<Matrix> , int32_t );
-    std::vector<float> energy_expdot(int32_t);
-    real partial_energy_expdot(Vector& , Vector& , std::shared_ptr<Matrix> , int32_t );
 
-    real negativeSamplingMultiVecVar(int32_t, int32_t, real);
     real partial_energy_vecvar(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>);
     real partial_energy_KL(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Matrix>, std::shared_ptr<Matrix>);
     std::vector<float> energy_vecvar(int32_t, int32_t);
     real energy_singleVecvar(int32_t, int32_t);
+    real regLogVar(real logvar);
 };
 
 }

@@ -89,12 +89,11 @@ void FastText::saveVectors() {
 }
 
 void FastText::getVariance(Vector& var, const std::string& word, bool first = true) {
+    // Deprecated; not use this!
     var.zero();
     int32_t id = dict_->getId(word);
     if (first) {
       var.addRow(*inputvar_, id);
-    } else {
-      var.addRow(*input2var_, id);
     }
 }
 
@@ -104,29 +103,14 @@ void FastText::saveVariances() {
     std::cerr << "Error opening file for saving variances." << std::endl;
     exit(EXIT_FAILURE);
   }
-  ofs << dict_->nwords() << " " << args_->dim << std::endl;
-  Vector var(args_->dim);
+  ofs << dict_->nwords() << " " << 1 << std::endl;
   for (int32_t i = 0; i < dict_->nwords(); i++) {
     std::string word = dict_->getWord(i);
-    getVariance(var, word);
+    int32_t id = dict_->getId(word);
+    real var = inputvar_[id];
     ofs << word << " " << var << std::endl;
   }
   ofs.close();
-  if (args_->multi) {
-    std::ofstream ofs(args_->output + ".var2");
-    if (!ofs.is_open()) {
-      std::cerr << "Error opening file for saving variances." << std::endl;
-      exit(EXIT_FAILURE);
-    }
-    ofs << dict_->nwords() << " " << args_->dim << std::endl;
-    Vector var(args_->dim);
-    for (int32_t i = 0; i < dict_->nwords(); i++) {
-      std::string word = dict_->getWord(i);
-      getVariance(var, word, false);
-      ofs << word << " " << var << std::endl;
-    }
-    ofs.close();
-  }
 }
 
 void FastText::saveOutput() {
@@ -259,18 +243,6 @@ void FastText::saveNgramVectors(std::string prefix) {
     ofs_in2 << vec << std::endl;
   }
   ofs_in2.close();
-  std::cerr << "Writing output2_ to file " << std::endl;
-  std::ofstream ofs3_2(prefix + ".out2");
-  if (!ofs3_2.is_open()) {
-    std::cerr << "Error opening file for saving vectors." << std::endl;
-    exit(EXIT_FAILURE);
-  }  
-  for (int32_t i = 0; i < dict_->nwords(); i++) {
-    vec.zero();
-    vec.addRow(*output2_, i);
-    ofs3_2 << vec << std::endl;
-  }
-  ofs3_2.close();
   } 
 
   //////////////////////////////////////////
@@ -336,7 +308,7 @@ void FastText::loadModel(std::istream& in) {
     output_->load(in);
   }
 
-  model_ = std::make_shared<Model>(input_, output_, input2_, output2_, inputvar_, input2var_, outputvar_, output2var_, args_, 0);
+  model_ = std::make_shared<Model>(input_, output_, inputvar_, outputvar_, args_, 0);
   model_->quant_ = quant_;
   model_->setQuantizePointer(qinput_, qoutput_, args_->qout);
 
@@ -696,7 +668,7 @@ void FastText::trainThread(int32_t threadId) {
   std::ifstream ifs(args_->input);
   utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
 
-  Model model(input_, output_, input2_, output2_, inputvar_, input2var_, outputvar_, output2var_, args_, threadId);
+  Model model(input_, output_, inputvar_, outputvar_, args_, threadId);
   
   if (args_->model == model_name::sup) {
     model.setTargetCounts(dict_->getCounts(entry_type::label));
@@ -797,7 +769,7 @@ void FastText::train(std::shared_ptr<Args> args) {
     input_ = std::make_shared<Matrix>(dict_->nwords()+args_->bucket, args_->dim);
     input_->uniform(1.0 / args_->dim);
     if (args_->var){
-      inputvar_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
+      inputvar_ = std::make_shared<Vector>(dict_->nwords());
       if (args_->notlog) {
         inputvar_->init(args->var_scale);
       } else {
@@ -812,7 +784,7 @@ void FastText::train(std::shared_ptr<Args> args) {
     output_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
     // Feb6
     if (args_->var){
-      outputvar_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
+      outputvar_ = std::make_shared<Vector>(dict_->nwords());
       if (args_->notlog) {
         outputvar_->init(args_->var_scale);
       } else {
@@ -821,24 +793,6 @@ void FastText::train(std::shared_ptr<Args> args) {
     }
   }
   output_->zero();
-
-  // BenA: This is for multi-prototype
-  if (args_->pretrainedVectors.size() != 0) {
-    std::cerr << "Pre Trained Option Not Available" << std::endl;
-  } else {
-    input2_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-    input2_->uniform(1.0 / args_->dim);
-    if (args_->multi && args_->var){
-      input2var_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-      input2var_->init(logvar);
-    }
-  }
-  output2_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-  output2_->zero();
-  if (args_->multi && args_->var){
-    output2var_ = std::make_shared<Matrix>(dict_->nwords(), args_->dim);
-    output2var_->init(logvar);
-  }
 
   start = clock();
   tokenCount = 0;
@@ -853,16 +807,14 @@ void FastText::train(std::shared_ptr<Args> args) {
   } else {
     trainThread(0);
   }
-  model_ = std::make_shared<Model>(input_, output_, input2_, output2_, inputvar_, input2var_, outputvar_, output2var_, args_, 0);
+  model_ = std::make_shared<Model>(input_, output_, inputvar_, outputvar_, args_, 0);
   saveModel();
   if (args_->model != model_name::sup) {
     saveVectors();
-    if (args->var) {
-      if (!args_->notlog) {
-        model_->expVar();
-      }
-      saveVariances();
+    if (!args_->notlog) {
+      model_->expVar();
     }
+    saveVariances();
     if (args_->saveOutput > 0) {
       saveOutput();
     }

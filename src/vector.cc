@@ -155,6 +155,11 @@ const real& Vector::operator[](int64_t i) const {
   return data_[i];
 }
 
+void Vector::operator=(Vector x) {
+    for (int64_t j = 0; j < m_; j++) {
+        data_[j] = x[j];
+  }
+}
 std::ostream& operator<<(std::ostream& os, const Vector& v)
 {
   os << std::setprecision(5);

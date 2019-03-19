@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include <iostream>
+#include <cmath>
 
 namespace fasttext {
 
@@ -62,6 +63,11 @@ Args::Args() {
   expdot = false;
   var = false;
   notlog = false;
+
+  norm_grad = false;
+  min_logvar = 0;
+  min_logvar = 0;
+  c = 0;
 }
 
 void Args::parseArgs(int argc, char** argv) {
@@ -193,6 +199,18 @@ void Args::parseArgs(int argc, char** argv) {
     } else if (strcmp(argv[ai], "-notlog") == 0) {
       notlog = atoi(argv[ai + 1]); // 0 for false and else for true
       std::cerr << "notlog" << notlog << std::endl;
+    } else if (strcmp(argv[ai], "-norm_grad") == 0) {
+      norm_grad = atoi(argv[ai + 1]); // 0 for false and else for true
+      std::cerr << "norm_grad" << norm_grad << std::endl;
+    } else if (strcmp(argv[ai], "-min_logvar") == 0) {
+      min_logvar = log(atof(argv[ai + 1])); // 0 for false and else for true
+      std::cerr << "min_logvar" << min_logvar << std::endl;
+    } else if (strcmp(argv[ai], "-max_logvar") == 0) {
+      max_logvar = log(atof(argv[ai + 1])); // 0 for false and else for true
+      std::cerr << "max_logvar" << max_logvar << std::endl;
+    } else if (strcmp(argv[ai], "-c") == 0) {
+      c = atof(argv[ai + 1]); // 0 for false and else for true
+      std::cerr << "L2 constraint" << c << std::endl;
     } else {
       std::cerr << "Unknown argument: " << argv[ai] << std::endl;
       printHelp();

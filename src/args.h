@@ -75,6 +75,11 @@ class Args {
     bool expdot;
     bool var;
     bool notlog;
+
+    bool norm_grad;
+    float min_logvar;
+    float max_logvar;
+    float c; // hard constraint on l2 norm of mu
 };
 
 }
