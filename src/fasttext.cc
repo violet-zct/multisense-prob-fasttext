@@ -90,11 +90,6 @@ void FastText::saveVectors() {
 
 void FastText::getVariance(Vector& var, const std::string& word, bool first = true) {
     // Deprecated; not use this!
-    var.zero();
-    int32_t id = dict_->getId(word);
-    if (first) {
-      var.addRow(*inputvar_, id);
-    }
 }
 
 void FastText::saveVariances() {
@@ -107,7 +102,7 @@ void FastText::saveVariances() {
   for (int32_t i = 0; i < dict_->nwords(); i++) {
     std::string word = dict_->getWord(i);
     int32_t id = dict_->getId(word);
-    real var = inputvar_[id];
+    real var = inputvar_->data_[id];
     ofs << word << " " << var << std::endl;
   }
   ofs.close();
@@ -224,28 +219,6 @@ void FastText::saveNgramVectors(std::string prefix) {
   }
   ofs3.close();
 
-
-  ///////////////////////////////////////
-  // For multi-prototype
-  std::cerr << "Saving 2nd component. args_->multi = " << args_->multi << std::endl;
-  if (args_->multi){
-    std::cout << "Multi-Prototype Case: saving additional matrices" << std::endl; 
-  std::string f_in2(prefix + ".in2");
-  std::cerr << "Saving input2_ to file: " << f_in2 << std::endl;
-  std::ofstream ofs_in2(f_in2);
-  if (!ofs_in2.is_open()) {
-    std::cerr << "Error opening file for saving vectors." << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  for (int32_t i = 0; i < dict_->nwords(); i++) {
-    vec.zero();
-    vec.addRow(*input2_, i);
-    ofs_in2 << vec << std::endl;
-  }
-  ofs_in2.close();
-  } 
-
-  //////////////////////////////////////////
   if (args_->include_dictemb){
     std::cerr << "Save computed subword vectors to file " << std::endl;
     std::ofstream ofs_vec(prefix + ".subword");

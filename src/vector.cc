@@ -160,6 +160,13 @@ void Vector::operator=(Vector x) {
         data_[j] = x[j];
   }
 }
+
+void Vector::init(real val) {
+  for (int64_t i = 0; i < m_; i++) {
+    data_[i] = val;
+  }
+}
+
 std::ostream& operator<<(std::ostream& os, const Vector& v)
 {
   os << std::setprecision(5);

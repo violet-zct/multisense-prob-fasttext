@@ -48,6 +48,7 @@ class Vector {
     void mul(const Matrix&, const Vector&);
     void mulRow(const Matrix&, int64_t);
     void mulExpRow(const Matrix&, int64_t);
+    void init(real);
     int64_t argmax();
 };
 
