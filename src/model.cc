@@ -26,7 +26,7 @@ Model::Model(std::shared_ptr<Matrix> wi,
              std::shared_ptr<Args> args,
              int32_t seed)
   : hidden_(args->dim), output_(wo->m_),
-  grad_(args->dim), temp_(args->dim), gradvar_(args->dim), rng(seed), quant_(false)
+  grad_(args->dim), temp_(args->dim), rng(seed), quant_(false)
 {
   wi_ = wi;
   wo_ = wo;
@@ -92,7 +92,7 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
 
     gradvar_p_ = 0.0;
     gradvar_n_ = 0.0;
-    gradvar_ = 0.0
+    gradvar_ = 0.0;
 
     for (int64_t ii = 0; ii < hidden_.m_; ii++) {
       // eplus_results simplified so only lr left
@@ -114,8 +114,8 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
       grad_.data_[ii] -= (gradmu_p_[ii] + gradmu_n_[ii]);
     }
     if (args_->c != 0.0) {
-     gradmu_p_->addRow(wo_, target, -lr*args_c*2.);
-     gradmu_n_->addRow(wo_, negTarget, -lr*args_c*2.);
+     gradmu_p_->addRow(wo_, target, -lr*args_->c*2.);
+     gradmu_n_->addRow(wo_, negTarget, -lr*args_->c*2.);
     }
 
     wo_->addRow(gradmu_p_, target, 1.);
@@ -130,7 +130,7 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
 }
 
 real Model::regLogVar(real logvar) {
-    return max(args_.min_logvar, min(logvar, args_.max_logvar));
+    return std::max(args_->min_logvar, std::min(logvar, args_->max_logvar));
 }
 
 real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
@@ -359,13 +359,12 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
   }
   nexamples_ += 1;
 
-  // not using
-  if (args_.norm_grad) {
+  if (args_->norm_grad) {
     grad_.mul(1.0 / input.size());
   }
 
   if (args_->c != 0.0) {
-    grad_->addRow(wi_, wordidx, -lr*args_c*2.);
+    grad_->addRow(wi_, wordidx, -lr*args_->c*2.);
   }
 
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
@@ -530,7 +529,7 @@ void Model::expVar() {
   assert(m == outvar_->m_);
   for (int32_t i = 0; i < m; ++i) {
     invar_->data_[i] = exp(invar_[i]);
-    outvar_->data_[i] = exp(outvar[i]);
+    outvar_->data_[i] = exp(outvar_[i]);
   }
 }
 }

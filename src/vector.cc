@@ -151,6 +151,10 @@ real& Vector::operator[](int64_t i) {
   return data_[i];
 }
 
+const real& Vector::operator[](int32_t i) const {
+  return data_[i];
+}
+
 const real& Vector::operator[](int64_t i) const {
   return data_[i];
 }
