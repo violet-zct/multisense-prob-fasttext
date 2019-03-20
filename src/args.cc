@@ -68,6 +68,8 @@ Args::Args() {
   min_logvar = 0;
   min_logvar = 0;
   c = 0;
+
+  clear_prog = 0.1;
 }
 
 void Args::parseArgs(int argc, char** argv) {
