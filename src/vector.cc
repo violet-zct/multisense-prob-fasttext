@@ -155,7 +155,7 @@ const real& Vector::operator[](int64_t i) const {
   return data_[i];
 }
 
-void Vector::operator=(Vector x) {
+void Vector::copy(const Vector& x) {
     for (int64_t j = 0; j < m_; j++) {
         data_[j] = x[j];
   }

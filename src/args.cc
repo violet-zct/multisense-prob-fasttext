@@ -180,37 +180,37 @@ void Args::parseArgs(int argc, char** argv) {
       std::cerr << "Group Sparsity Strength within subword " << gs_subword << std::endl;
     } else if (strcmp(argv[ai], "-num_subgs_samples") == 0) {
       num_subgs_samples = atoi(argv[ai + 1]);
-      std::cerr << "Num subgs samples" << num_subgs_samples << std::endl;
+      std::cerr << "Num subgs samples " << num_subgs_samples << std::endl;
     } else if (strcmp(argv[ai], "-margin") == 0) {
       margin = atof(argv[ai + 1]);
-      std::cerr << "Margin" << margin << std::endl;
+      std::cerr << "Margin " << margin << std::endl;
     } else if (strcmp(argv[ai], "-multi") == 0) {
       multi = atoi(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "Multi" << multi << std::endl;
+      std::cerr << "Multi " << multi << std::endl;
     } else if (strcmp(argv[ai], "-var_scale") == 0) {
       var_scale = atof(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "var scale" << var_scale << std::endl;
+      std::cerr << "var scale " << var_scale << std::endl;
     } else if (strcmp(argv[ai], "-expdot") == 0) {
       expdot = atoi(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "expdot" << expdot << std::endl;
+      std::cerr << "expdot " << expdot << std::endl;
     } else if (strcmp(argv[ai], "-var") == 0) {
       var = atoi(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "var" << var << std::endl;
+      std::cerr << "var " << var << std::endl;
     } else if (strcmp(argv[ai], "-notlog") == 0) {
       notlog = atoi(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "notlog" << notlog << std::endl;
+      std::cerr << "notlog " << notlog << std::endl;
     } else if (strcmp(argv[ai], "-norm_grad") == 0) {
       norm_grad = atoi(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "norm_grad" << norm_grad << std::endl;
+      std::cerr << "norm_grad " << norm_grad << std::endl;
     } else if (strcmp(argv[ai], "-min_logvar") == 0) {
       min_logvar = log(atof(argv[ai + 1])); // 0 for false and else for true
-      std::cerr << "min_logvar" << min_logvar << std::endl;
+      std::cerr << "min_logvar " << min_logvar << std::endl;
     } else if (strcmp(argv[ai], "-max_logvar") == 0) {
       max_logvar = log(atof(argv[ai + 1])); // 0 for false and else for true
-      std::cerr << "max_logvar" << max_logvar << std::endl;
+      std::cerr << "max_logvar " << max_logvar << std::endl;
     } else if (strcmp(argv[ai], "-c") == 0) {
       c = atof(argv[ai + 1]); // 0 for false and else for true
-      std::cerr << "L2 constraint" << c << std::endl;
+      std::cerr << "L2 constraint " << c << std::endl;
     } else {
       std::cerr << "Unknown argument: " << argv[ai] << std::endl;
       printHelp();

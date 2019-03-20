@@ -25,8 +25,8 @@ Model::Model(std::shared_ptr<Matrix> wi,
              std::shared_ptr<Vector> outvar,
              std::shared_ptr<Args> args,
              int32_t seed)
-  : hidden_(args->dim), output_(wo->m_), gradmu_p_(args_->dim), gradmu_n_(args_->dim),
-  grad_(args->dim), temp_(args->dim), rng(seed), quant_(false), wp_diff_(args_->dim), wn_diff_(args_->dim)
+  : hidden_(args->dim), output_(wo->m_), gradmu_p_(args->dim), gradmu_n_(args->dim),
+  grad_(args->dim), temp_(args->dim), rng(seed), quant_(false), wp_diff_(args->dim), wn_diff_(args->dim)
 {
   wi_ = wi;
   wo_ = wo;
@@ -106,7 +106,7 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     }
 
     gradvar_p_ = exp(outvar_->data_[target]) * gradvar_p_;
-    gradvar_n_ = exp(outvar_->data_[negTarget] * gradvar_n_);
+    gradvar_n_ = exp(outvar_->data_[negTarget]) * gradvar_n_;
     gradvar_ = exp(invar_->data_[wordidx]) * gradvar_;
     outvar_->data_[target] += gradvar_p_;
     outvar_->data_[negTarget] += gradvar_n_;
