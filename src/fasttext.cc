@@ -788,7 +788,7 @@ void FastText::train(std::shared_ptr<Args> args) {
     trainThread(0);
   }
   model_ = std::make_shared<Model>(input_, output_, inputvar_, outputvar_, args_, 0);
-  saveModel();
+//  saveModel();
   if (args_->model != model_name::sup) {
     saveVectors();
     if (!args_->notlog) {
@@ -799,7 +799,7 @@ void FastText::train(std::shared_ptr<Args> args) {
       saveOutput();
     }
   }
-  saveNgramVectors(args_->output);
+//  saveNgramVectors(args_->output);
 }
 
 }
