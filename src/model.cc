@@ -125,7 +125,7 @@ real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) 
     wo_->addRow(gradmu_p_, target, 1.);
     wo_->addRow(gradmu_n_, negTarget, 1.);
 
-    if (args_->min_logvar !=0 && args_->max_logvar !=0) {
+    if (args_->min_logvar !=0 || args_->max_logvar !=0) {
       outvar_->data_[target] = regLogVar(outvar_->data_[target]);
       outvar_->data_[negTarget] = regLogVar(outvar_->data_[negTarget]);
     }
@@ -168,10 +168,10 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
 
   hidden_.addRow(*wo, target, -1.); // mu - vec
   if (true_label) {
-    wp_diff_ = hidden_;
+    wp_diff_.copy(hidden_);
     wp_var_sum_ = var_sum;
   } else {
-    wn_diff_ = hidden_;
+    wn_diff_.copy(hidden_);
     wn_var_sum_ = var_sum;
   }
   real sim = 0.0;
@@ -363,7 +363,7 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
 
   invar_->data_[wordidx] += gradvar_;
 
-  if (args_->min_logvar !=0 && args_->max_logvar !=0) {
+  if (args_->min_logvar !=0 || args_->max_logvar !=0) {
     invar_->data_[wordidx] = regLogVar(invar_->data_[wordidx]);
   }
 }
