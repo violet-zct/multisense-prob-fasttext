@@ -211,6 +211,9 @@ void Args::parseArgs(int argc, char** argv) {
     } else if (strcmp(argv[ai], "-c") == 0) {
       c = atof(argv[ai + 1]); // 0 for false and else for true
       std::cerr << "L2 constraint " << c << std::endl;
+    } else if (strcmp(argv[ai], "-clear_prog") == 0) {
+      clear_prog = atof(argv[ai + 1]); // clear log every this updates in a thread
+      std::cerr << "L2 constraint " << c << std::endl;
     } else {
       std::cerr << "Unknown argument: " << argv[ai] << std::endl;
       printHelp();

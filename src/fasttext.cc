@@ -649,6 +649,9 @@ void FastText::trainThread(int32_t threadId) {
     model.setTargetCounts(dict_->getCounts(entry_type::word));
   }
 
+  float base_clear_progress = args_->clear_prog;
+  float cur_clear_prog = args_->clear_prog;
+
   const int64_t ntokens = dict_->ntokens();
   int64_t localTokenCount = 0;
   std::vector<int32_t> line, labels;
@@ -668,6 +671,10 @@ void FastText::trainThread(int32_t threadId) {
       localTokenCount = 0;
       if (threadId == 0 && args_->verbose > 1) {
         printInfo(progress, model.getLoss());
+      }
+      if (progress >= cur_clear_prog) {
+        model.reset_loss();
+        cur_clear_prog += base_clear_progress;
       }
     }
   }

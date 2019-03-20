@@ -53,6 +53,11 @@ Model::~Model() {
   delete[] t_log;
 }
 
+void  Model::reset_loss() {
+  nexamples_ = 1;
+  loss_ = 0.0;
+}
+
 void Model::setQuantizePointer(std::shared_ptr<QMatrix> qwi,
                                std::shared_ptr<QMatrix> qwo, bool qout) {
   qwi_ = qwi;

@@ -143,6 +143,7 @@ class Model {
     std::vector<float> energy_vecvar(int32_t, int32_t);
     real energy_singleVecvar(int32_t, int32_t, bool);
     real regLogVar(real logvar);
+    void reset_loss();
 };
 
 }
