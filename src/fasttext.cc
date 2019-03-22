@@ -293,8 +293,10 @@ void FastText::loadModel(std::istream& in) {
 }
 
 void FastText::printInfo(real progress, real loss) {
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  double t = std::chrono::duration_cast<std::chrono::duration<double>> (end - start_).count();
+//  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//  double t = std::chrono::duration_cast<std::chrono::duration<double>> (end - start_).count();
+    // clock_t might also only be 32bits wide on some systems
+  double t = double(clock() - start) / double(CLOCKS_PER_SEC);
   double lr = args_->lr * (1.0 - progress);
   double wst = 0;
 
