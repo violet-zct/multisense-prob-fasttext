@@ -294,9 +294,7 @@ void FastText::loadModel(std::istream& in) {
 
 void FastText::printInfo(real progress, real loss) {
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  double t =
-      std::chrono::duration_cast<std::chrono::duration<double>>(end - start)
-          .count();
+  double t = std::chrono::duration_cast<std::chrono::duration<double>> (end - start_).count();
   double lr = args_->lr * (1.0 - progress);
   double wst = 0;
 
