@@ -295,7 +295,7 @@ void FastText::loadModel(std::istream& in) {
 void FastText::printInfo(real progress, real loss) {
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   double t =
-      std::chrono::duration_cast<std::chrono::duration<double>>(end - start_)
+      std::chrono::duration_cast<std::chrono::duration<double>>(end - start)
           .count();
   double lr = args_->lr * (1.0 - progress);
   double wst = 0;
@@ -305,7 +305,7 @@ void FastText::printInfo(real progress, real loss) {
   if (progress > 0 && t >= 0) {
     progress = progress * 100;
     eta = t * (100 - progress) / progress;
-    wst = double(tokenCount_) / t / args_->thread;
+    wst = double(tokenCount) / t / args_->thread;
   }
   int32_t etah = eta / 3600;
   int32_t etam = (eta % 3600) / 60;
