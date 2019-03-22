@@ -99,7 +99,7 @@ class Model {
     ~Model();
 
     real binaryLogistic(int32_t, bool, real);
-    real negativeSamplingSingleExpdot(int32_t, real);
+    real negativeSampling(int32_t target, real lr);
     real hierarchicalSoftmax(int32_t, real);
     real softmax(int32_t, real);
 
@@ -131,16 +131,10 @@ class Model {
     std::minstd_rand rng;
     bool quant_;
     void setQuantizePointer(std::shared_ptr<QMatrix>, std::shared_ptr<QMatrix>, bool);
-    void groupSparsityRegularization(int, int, int, double);
-    real groupSparsityRegularization(double, int32_t);
 
-    real elk(int32_t, bool, real);
     real negativeSamplingSingleVar(int32_t, int32_t, real);
-    real negativeSamplingSingleKL(int32_t, int32_t, real);
 
     real partial_energy_vecvar(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Vector>, std::shared_ptr<Vector>, bool);
-    real partial_energy_KL(Vector& , Vector& , std::shared_ptr<Matrix>, int32_t, int32_t, std::shared_ptr<Vector>, std::shared_ptr<Vector>);
-    std::vector<float> energy_vecvar(int32_t, int32_t);
     real energy_singleVecvar(int32_t, int32_t, bool);
     real regLogVar(real logvar);
     void reset_loss();

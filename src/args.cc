@@ -124,6 +124,8 @@ void Args::parseArgs(int argc, char** argv) {
         loss = loss_name::hs;
       } else if (strcmp(argv[ai + 1], "ns") == 0) {
         loss = loss_name::ns;
+      } else if (strcmp(argv[ai + 1], "gs") == 0) {
+        loss = loss_name::gs;
       } else if (strcmp(argv[ai + 1], "softmax") == 0) {
         loss = loss_name::softmax;
       } else {

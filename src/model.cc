@@ -79,10 +79,6 @@ real Model::binaryLogistic(int32_t target, bool label, real lr) {
   }
 }
 
-real Model::negativeSamplingSingleKL(int32_t wordidx, int32_t target, real lr) {
-    // Not use this
-}
-
 real Model::negativeSamplingSingleVar(int32_t wordidx, int32_t target, real lr) {
   real eplus_result = energy_singleVecvar(wordidx, target, true);
   int32_t negTarget = getNegative(target);
@@ -142,30 +138,6 @@ real Model::regLogVar(real logvar) {
     return std::max(args_->min_logvar, std::min(logvar, args_->max_logvar));
 }
 
-real Model::negativeSamplingSingleExpdot(int32_t target, real lr) {
-  // loss is the negative of similarity here
-  grad_.zero();
-  real sim1 = 0.0;
-  real sim2 = 0.0;
-  real scale = lr/(args_->var_scale);
-  int32_t negTarget = getNegative(target);
-
-  sim1 = wo_->dotRow(hidden_, target);
-  sim2 = wo_->dotRow(hidden_, negTarget);
-
-  real loss = args_->margin - sim1 + sim2;
-  if (loss > 0.0){
-    grad_.addRow(*wo_, target, scale);
-    grad_.addRow(*wo_, negTarget, -scale);
-    
-    // Update wo_ itself
-    // calculate the loss based on the norm
-    wo_->addRow(hidden_, target, scale);
-    wo_->addRow(hidden_, negTarget, -scale);
-  }
-  return std::max((real) 0.0, loss);
-}
-
 // partial energy expdot
 real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Vector> varin, std::shared_ptr<Vector> varout, bool true_label){
   temp_.zero();
@@ -190,11 +162,6 @@ real Model::partial_energy_vecvar(Vector& hidden, Vector& grad, std::shared_ptr<
   return sim;
 }
 
-// KL Divergence
-real Model::partial_energy_KL(Vector& hidden, Vector& grad, std::shared_ptr<Matrix> wo, int32_t wordidx, int32_t target, std::shared_ptr<Vector> varin, std::shared_ptr<Vector> varout){
-    // Not implemented yet
-}
-
 // energy_vecvar but for single case
 real Model::energy_singleVecvar(int32_t wordidx, int32_t target, bool true_label) {
   return partial_energy_vecvar(hidden_, grad_, wo_, wordidx, target, invar_, outvar_, true_label);
@@ -207,6 +174,19 @@ real Model::hierarchicalSoftmax(int32_t target, real lr) {
   const std::vector<int32_t>& pathToRoot = paths[target];
   for (int32_t i = 0; i < pathToRoot.size(); i++) {
     loss += binaryLogistic(pathToRoot[i], binaryCode[i], lr);
+  }
+  return loss;
+}
+
+real Model::negativeSampling(int32_t target, real lr) {
+  real loss = 0.0;
+  grad_.zero();
+  for (int32_t n = 0; n <= args_->neg; n++) {
+    if (n == 0) {
+      loss += binaryLogistic(target, true, lr);
+    } else {
+      loss += binaryLogistic(getNegative(target), false, lr);
+    }
   }
   return loss;
 }
@@ -341,10 +321,12 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
     wordidx = *it;
     break;
   }
-  
+
   computeHidden(input, hidden_);
-  if (args_->loss == loss_name::ns) {
+  if (args_->loss == loss_name::gs) {
     loss_ += negativeSamplingSingleVar(wordidx, target, lr);
+  } else if (args_->loss == loss_name::ns) {
+    loss_ += negativeSampling(target, lr);
   } else if (args_->loss == loss_name::hs) {
     // not using
     loss_ += hierarchicalSoftmax(target, lr);
@@ -358,54 +340,26 @@ void Model::update(const std::vector<int32_t>& input, int32_t target, real lr) {
     grad_.mul(1.0 / input.size());
   }
 
-  if (args_->c != 0.0) {
-    grad_.addRow(*wi_, wordidx, -2*lr*args_->c);
-  }
-
   for (auto it = input.cbegin(); it != input.cend(); ++it) {
     wi_->addRow(grad_, *it, 1.0);
   }
 
-  invar_->data_[wordidx] += gradvar_;
-
-  if (args_->min_logvar !=0 || args_->max_logvar !=0) {
-    invar_->data_[wordidx] = regLogVar(invar_->data_[wordidx]);
-  }
-}
-
-void Model::groupSparsityRegularization(int min, int max, int num_gs_samples, double strength){
-  // sampling from the uniform interval [min, max)
-  grad_.zero();
-  std::uniform_int_distribution<> uniform(min, max-1);
-  if (args_->gs_lambda > 1e-12){
-    for (int ii = 0; ii < num_gs_samples; ii++){
-      // Note: osz_ is the number of words in the dictionary
-      // Perhaps adjusts the distribution of this sampler
-      int32_t idx = uniform(rng);
-      loss_ += groupSparsityRegularization(strength, idx);
+  if (args_->loss == loss_name::gs) {
+    if (args_->c != 0.0) {
+      grad_.addRow(*wi_, wordidx, -2*lr*args_->c);
     }
-  }
-}
 
-real Model::groupSparsityRegularization(double reg_strength, int32_t word){
-  // To be efficient, only do it if the strength is non-zero
-  if (reg_strength > 0.0000000001) {
-    real norm = wi_->l2NormRow(word);
-    real loss = reg_strength*norm;
-    // 2. update the wi_ accordingly based on the gradient
-    // note: reuse the grad variable here
-    grad_.zero();
-    grad_.addRow(*wi_, word, -reg_strength/(norm + 0.00001));
-    wi_->addRow(grad_, word, 1.0);
-    return loss;
-  } else {
-    return 0.0;
+    invar_->data_[wordidx] += gradvar_;
+
+    if (args_->min_logvar !=0 || args_->max_logvar !=0) {
+      invar_->data_[wordidx] = regLogVar(invar_->data_[wordidx]);
+    }
   }
 }
 
 void Model::setTargetCounts(const std::vector<int64_t>& counts) {
   assert(counts.size() == osz_);
-  if (args_->loss == loss_name::ns) {
+  if (args_->loss == loss_name::ns || args_->loss == loss_name::gs) {
     initTableNegatives(counts);
   }
   if (args_->loss == loss_name::hs) {
